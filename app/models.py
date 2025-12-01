@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 # --- Shared Fields (Business Logic) ---
 class TaskBase(BaseModel):
+    """Base model for a task item."""
     title: str = Field(..., description="A short description of the task")
     description: Optional[str] = Field(None, description="A longer explanation")
     dueDate: Optional[date] = Field(None, description="Date when the task should be completed (YYYY-MM-DD)")

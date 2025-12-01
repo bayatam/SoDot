@@ -6,6 +6,10 @@ from app.models import TaskCreate, TaskUpdate, TaskRecord
 from app.storage.engine import JsonStorageEngine
 
 class TaskRepository:
+    """
+    Pure Data Access Layer. 
+    Handles reading/writing TaskRecords to the DB Engine.
+    """
     def __init__(self, db: JsonStorageEngine):
         self.db = db
 
@@ -20,48 +24,16 @@ class TaskRepository:
         item = data.get(task_id)
         return TaskRecord(**item) if item else None
 
-    async def create(self, task_create: TaskCreate) -> TaskRecord:
+    async def save(self, record: TaskRecord) -> TaskRecord:
         """
-        Creates a new record.
+        Persist a full record. 
+        Used for both Creation (new ID) and Updates (existing ID).
         """
-        new_id = str(uuid.uuid4())
-        timestamp = datetime.now()
-
-        # Combine input data with system-generated fields
-        record = TaskRecord(
-            id=new_id,
-            createdAt=timestamp,
-            **task_create.model_dump()
-        )
-
         data = await self.db.read()
-        
         # model_dump(mode='json') ensures datetimes are serialized to ISO strings
-        data[new_id] = record.model_dump(mode='json')
-        
+        data[record.id] = record.model_dump(mode='json')
         await self.db.write(data)
         return record
-
-    async def update(self, task_id: str, task_update: TaskUpdate) -> Optional[TaskRecord]:
-        """Updates an existing record."""
-        data = await self.db.read()
-        
-        if task_id not in data:
-            return None
-            
-        # Load existing record
-        existing_record = TaskRecord(**data[task_id])
-        
-        # Merge updates
-        # exclude_unset=True ensures we don't overwrite existing data with None
-        update_data = task_update.model_dump(exclude_unset=True)
-        updated_record = existing_record.model_copy(update=update_data)
-        
-        # Save back to DB
-        data[task_id] = updated_record.model_dump(mode='json')
-        await self.db.write(data)
-        
-        return updated_record
 
     async def delete(self, task_id: str) -> bool:
         """Remove a task by ID. Returns True if deleted, False if not found."""
