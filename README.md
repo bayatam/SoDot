@@ -39,7 +39,7 @@ uvicorn app.main:app --reload
 ```
 The API will be available at http://127.0.0.1:8000.
 
-I also added a demo script that can be ran in a separate terminal:
+I also added a demo script that can be ran in a separate terminal, it runs a full lifecycle (create, read, update, delete) over HTTP:
 ```
 python scripts/live_demo.py
 ```
@@ -58,14 +58,17 @@ Of note, I did not include unit tests for the JsonStorageEngine (app/storage/eng
 
 ## Design Choices
 I split the architecture into:
-- API Endpoints under routers/
-- Business Logic under services/
-- Data Access under storage/
+- API Endpoints under routers/, this handles http concerns, like input validation and status codes.
+- Business Logic under services/, this is somewhat empty now, doing only id generation and timestamping, but if we were to expand to add the optional functionality (such as filtering), they would all fall here.
+- Data Access under storage/, this is split between the engine, which interacts with the database.json file, and is intended to let me abstract away its fake nature, and the repository, which manages reading/writing, and connecting to the database.
 
 Of note about the Update in CRUD:
 
 - Contrary to the example given, I used PATCH instead of PUT. PATCH felt like it fit better for record updates, while PUT feels like it is more about replacing a record.
 - `PATCH /todos/{task_id}` technically allows for modifying the task completion. This was not in the specification, but a byproduct of my TaskUpdate pydantic model. I could have blocked using PATCH to modify the completion state, but I thought allowing the isCompleted field, but ignoring its value made for poor API design, so I left that loophole in. Given more time I would split TaskUpdate to separate this.
+
+#### Testing
+Each class has its unit tests, I added integration tests somewhat early, when I had all the functionality. This let me be confident when separating the Business Logic layer from the API Endpoints, as I could check whether the end-to-end functionality was unaltered.
 
 #### Structure
 
