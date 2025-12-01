@@ -1,13 +1,24 @@
 from datetime import date, datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # --- Shared Fields (Business Logic) ---
 class TaskBase(BaseModel):
-    """Base model for a task item."""
-    title: str = Field(..., description="A short description of the task")
-    description: Optional[str] = Field(None, description="A longer explanation")
+    """Base model for a task item with validation."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(
+        ..., 
+        min_length=1, 
+        max_length=100,
+        description="A short description of the task (1-100 chars)"
+    )
+    description: Optional[str] = Field(
+        None, 
+        max_length=500,
+        description="A longer explanation (max 500 chars)"
+    )
     dueDate: Optional[date] = Field(None, description="Date when the task should be completed (YYYY-MM-DD)")
     isCompleted: bool = Field(default=False, description="Completion status flag")
 
@@ -26,8 +37,19 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(BaseModel):
     """Model for updating an existing task (all fields optional)."""
-    title: Optional[str] = Field(None, description="A short description of the task")
-    description: Optional[str] = Field(None, description="A longer explanation")
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: Optional[str] = Field(
+        None, 
+        min_length=1, 
+        max_length=100,
+        description="A short description of the task"
+    )
+    description: Optional[str] = Field(
+        None, 
+        max_length=500,
+        description="A longer explanation"
+    )
     dueDate: Optional[date] = Field(None, description="Date when the task should be completed (YYYY-MM-DD)")
     isCompleted: Optional[bool] = Field(None, description="Completion status flag")
 

@@ -92,6 +92,49 @@ def test_create_todo(mock_service):
     # Verify service was called correctly
     mock_service.create_task.assert_called_once()
 
+def test_create_todo_min_length_validation(mock_service):
+    """Test that empty title triggers 422 validation error."""
+    payload = {"title": "", "description": "Fail me"}
+    
+    response = client.post("/todos/", json=payload)
+    
+    assert response.status_code == 422
+    data = response.json()
+    assert data["detail"][0]["loc"] == ["body", "title"]
+    assert "at least 1 character" in data["detail"][0]["msg"]
+    mock_service.create_task.assert_not_called()
+
+def test_create_todo_max_length_validation(mock_service):
+    """Test that title > 100 chars triggers 422 validation error."""
+    long_title = "a" * 101 # 101 characters
+    payload = {"title": long_title}
+    
+    response = client.post("/todos/", json=payload)
+    
+    assert response.status_code == 422
+    assert "at most 100 characters" in response.json()["detail"][0]["msg"]
+    mock_service.create_task.assert_not_called()
+
+def test_create_todo_strip_whitespace(mock_service):
+    """Test that whitespace is automatically stripped from inputs."""
+    payload = {"title": "  Clean Me  ", "description": "  I am covered in whitespace  "}
+    
+    # We need the mock to return something valid so 201 passes
+    mock_service.create_task.return_value = TaskRecord(
+        id="1", title="Clean Me", description="I am covered in whitespace", 
+        createdAt=datetime.now()
+    )
+
+    response = client.post("/todos/", json=payload)
+    assert response.status_code == 201
+    
+    call_args = mock_service.create_task.call_args
+    # call_args[0][0] is the first positional arg (task_create object)
+    task_create_obj = call_args[0][0]
+    
+    assert task_create_obj.title == "Clean Me"
+    assert task_create_obj.description == "I am covered in whitespace"
+
 def test_get_todo_found(mock_service):
     """Test retrieving a single task by ID."""
     mock_record = TaskRecord(id="1", title="Task 1", isCompleted=False, createdAt=datetime.now())
