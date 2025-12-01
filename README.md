@@ -69,6 +69,7 @@ Of note about the Update in CRUD:
 
 #### Structure
 
+```
 |-- app/
 |   |-- routers/        # API Endpoints
 |   |-- services/       # Business Logic
@@ -84,6 +85,7 @@ Of note about the Update in CRUD:
 |   |-- services/       # Unit tests for Business Logic
 |   |-- storage/        # Unit tests for Repository
 +-- requirements.txt
+```
 
 ## Assumptions
 - I assumed we do not mind anyone being able to modify any note. I could not have added Auth given the time limit, but I'd have added a `x-user-id` header to requests and used that to simulate authentication. I could have added a `user-id` field to the records and only allow interaction with the tasks that have a matching user-id.
